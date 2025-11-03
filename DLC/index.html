@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DLC Editor — Auto-slice Spritesheet</title>
+
+  <!-- p5.js + JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1 class="title">DLC EDITOR</h1>
+  <div class="sub">Auto-slice Spritesheet → sequential frames (p5.js)</div>
+
+  <div class="container">
+    <!-- Left -->
+    <div class="card">
+      <h3>Load spritesheet (drag & drop or file picker)</h3>
+      <div class="row" style="margin-bottom:10px">
+        <input id="fileInput" type="file" accept="image/*" style="display:none" />
+        <button id="btnLoad" class="btn">Choose file</button>
+        <button id="btnClear" class="btn secondary">Clear</button>
+      </div>
+
+      <div id="previewArea">
+        <div id="previewInner">No image loaded<br /><small>Tip: drag & drop a PNG spritesheet here</small></div>
+      </div>
+
+      <h3 style="margin-top:18px">Auto-slice settings</h3>
+      <div class="grid2" style="margin-bottom:10px">
+        <div>
+          <label>filename prefix (eg. idle_)</label>
+          <input id="prefix" type="text" value="frame_">
+        </div>
+        <div>
+          <label>zero pad (eg. 3 → 001)</label>
+          <input id="zeroPad" type="number" value="2" min="1">
+        </div>
+        <div>
+          <label>alpha threshold (0–255)</label>
+          <input id="alphaThreshold" type="number" value="1" min="0" max="255">
+        </div>
+        <div>
+          <label>min frame width (px)</label>
+          <input id="minWidth" type="number" value="4" min="1">
+        </div>
+        <div>
+          <label>max empty-gap allowed inside a frame (px)</label>
+          <input id="gapTol" type="number" value="4" min="0">
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <div class="row">
+            <button id="btnAuto" class="btn">Auto Slice</button>
+            <button id="btnZip" class="btn">Auto Slice &amp; Download ZIP</button>
+            <button id="btnToAssets" class="btn secondary">Auto Slice &amp; Add to Assets</button>
+            <button id="btnDownloadCurrent" class="btn secondary">Download Current ZIP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div class="card">
+      <h3>Manifest preview</h3>
+      <pre id="manifestPreview">{}</pre>
+
+      <h3 style="margin-top:18px">Sliced frames (preview)</h3>
+      <div id="assetList"></div>
+
+      <h3 style="margin-top:18px">Logs</h3>
+      <div id="logs"></div>
+    </div>
+  </div>
+
+  <!-- Confirm Download Popup -->
+  <div id="downloadPopup" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
+    <div class="popup">
+      <div id="popupTitle" class="popup-title">Ready to download</div>
+      <div id="popupFilename" class="popup-filename"></div>
+      <div class="popup-actions">
+        <button id="confirmDownload" class="btn">Download</button>
+        <button id="cancelPopup" class="btn secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="sketch.js"></script>
+</body>
+</html>
