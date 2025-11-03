@@ -112,13 +112,12 @@ function closePopup(){
   pendingName = '';
 }
 
-/* --- Preserves the user filename in the browser save dialog --- */
+/* --- Preserves the user filename in the browser save dialog (Wix-safe) --- */
 function doConfirmDownload(){
   if(!pendingBlob) return;
-
   const url = URL.createObjectURL(pendingBlob);
 
-  // Anchor with download attribute keeps "Attack.zip".
+  // Anchor with download keeps the file name; _top helps inside Wix iframe
   const a = document.createElement('a');
   a.href = url;
   a.download = pendingName;
@@ -141,7 +140,6 @@ function renderAssets(){
   assetList.innerHTML = '';
   if (slicesFiles.length === 0) return;
 
-  // container styling (keeps it compact)
   assetList.style.display = 'flex';
   assetList.style.flexDirection = 'column';
   assetList.style.gap = '8px';
@@ -157,7 +155,6 @@ function renderAssets(){
     row.style.background = '#f3f4f6';
     row.style.border = '1px solid #e5e7eb';
 
-    // thumbnail
     const img = document.createElement('img');
     img.src = s.url;
     img.alt = s.name;
@@ -167,22 +164,19 @@ function renderAssets(){
     img.style.background = '#fff';
     img.style.border = '1px solid #e5e7eb';
     img.style.borderRadius = '6px';
-    img.style.imageRendering = 'pixelated'; // crisp for sprites
+    img.style.imageRendering = 'pixelated';
 
-    // name + size
     const meta = document.createElement('div');
     meta.style.flex = '1 1 auto';
     meta.innerHTML = `<div style="font-weight:600">${s.name}</div>
       <div style="color:#6b7280;font-size:12px">${(s.blob.size/1024).toFixed(1)} KB</div>`;
 
-    // actions
     const actions = document.createElement('div');
     actions.style.display = 'flex';
     actions.style.gap = '6px';
 
     const openBtn = document.createElement('a');
-    openBtn.href = s.url;
-    openBtn.target = '_blank';
+    openBtn.href = s.url; openBtn.target = '_blank';
     openBtn.textContent = 'Open';
     openBtn.className = 'btn';
     openBtn.style.textDecoration = 'none';
@@ -318,7 +312,6 @@ async function buildZipFromBlobs(blobs, prefixSafe){
   // assets/<prefix>/
   const assetsFolder = root.folder('assets').folder(prefixSafe);
 
-  // write files, and manifest entries using paths relative to the root
   const manifestAssets = [];
   blobs.forEach(b => {
     assetsFolder.file(b.name, b.blob);
@@ -330,7 +323,6 @@ async function buildZipFromBlobs(blobs, prefixSafe){
     });
   });
 
-  // manifest.json in the root (prefix folder)
   const manifestObj = {
     id: prefixSafe,
     title: 'Auto Slices',
@@ -339,7 +331,6 @@ async function buildZipFromBlobs(blobs, prefixSafe){
   };
   root.file('manifest.json', JSON.stringify(manifestObj, null, 2));
 
-  // Generate blob
   const content = await zip.generateAsync({ type:'blob' });
   return { blob: content, filename: `${prefixSafe}.zip` };
 }
