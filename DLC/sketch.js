@@ -112,26 +112,22 @@ function closePopup(){
   pendingName = '';
 }
 
-/* --- FIXED: preserve the user filename in the browser save dialog --- */
+/* --- Preserves the user filename in the browser save dialog --- */
 function doConfirmDownload(){
   if(!pendingBlob) return;
 
   const url = URL.createObjectURL(pendingBlob);
 
-  // Use an anchor with download attribute and target top window.
-  // This keeps the filename (e.g. "Attack.zip") AND works inside Wix iframe.
+  // Anchor with download attribute keeps "Attack.zip".
   const a = document.createElement('a');
   a.href = url;
-  a.download = pendingName;     // <-- preserves "Attack.zip"
-  a.target = '_top';            // navigate/trigger from top context
+  a.download = pendingName;
+  a.target = '_top';
   a.rel = 'noopener';
   document.body.appendChild(a);
-
-  // Dispatch a trusted click in the same user gesture
   a.click();
-
-  // Cleanup
   document.body.removeChild(a);
+
   setTimeout(()=> URL.revokeObjectURL(url), 5000);
   closePopup();
 }
@@ -139,15 +135,84 @@ function doConfirmDownload(){
 function updateManifest(){
   manifestPreview.innerText = JSON.stringify(manifest, null, 2);
 }
+
+/* ---- THUMBNAIL PREVIEW LIST ---- */
 function renderAssets(){
   assetList.innerHTML = '';
+  if (slicesFiles.length === 0) return;
+
+  // container styling (keeps it compact)
+  assetList.style.display = 'flex';
+  assetList.style.flexDirection = 'column';
+  assetList.style.gap = '8px';
+
   for(const s of slicesFiles){
-    const el = document.createElement('div');
-    el.className = 'asset';
-    el.textContent = `${s.name} — ${(s.blob.size/1024).toFixed(1)} KB`;
-    assetList.appendChild(el);
+    const row = document.createElement('div');
+    row.className = 'asset';
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+    row.style.gap = '10px';
+    row.style.padding = '8px';
+    row.style.borderRadius = '8px';
+    row.style.background = '#f3f4f6';
+    row.style.border = '1px solid #e5e7eb';
+
+    // thumbnail
+    const img = document.createElement('img');
+    img.src = s.url;
+    img.alt = s.name;
+    img.style.width = '72px';
+    img.style.height = '72px';
+    img.style.objectFit = 'contain';
+    img.style.background = '#fff';
+    img.style.border = '1px solid #e5e7eb';
+    img.style.borderRadius = '6px';
+    img.style.imageRendering = 'pixelated'; // crisp for sprites
+
+    // name + size
+    const meta = document.createElement('div');
+    meta.style.flex = '1 1 auto';
+    meta.innerHTML = `<div style="font-weight:600">${s.name}</div>
+      <div style="color:#6b7280;font-size:12px">${(s.blob.size/1024).toFixed(1)} KB</div>`;
+
+    // actions
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.gap = '6px';
+
+    const openBtn = document.createElement('a');
+    openBtn.href = s.url;
+    openBtn.target = '_blank';
+    openBtn.textContent = 'Open';
+    openBtn.className = 'btn';
+    openBtn.style.textDecoration = 'none';
+    openBtn.style.padding = '6px 10px';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = 'Remove';
+    removeBtn.className = 'btn secondary';
+    removeBtn.style.padding = '6px 10px';
+    removeBtn.addEventListener('click', ()=>{
+      const i = slicesFiles.findIndex(x => x.name === s.name);
+      if(i >= 0){
+        try{ URL.revokeObjectURL(slicesFiles[i].url); }catch(e){}
+        slicesFiles.splice(i,1);
+        manifest.assets = manifest.assets.filter(a => a.name !== s.name);
+        renderAssets(); updateManifest();
+        nowLog(`Removed ${s.name}`);
+      }
+    });
+
+    actions.appendChild(openBtn);
+    actions.appendChild(removeBtn);
+
+    row.appendChild(img);
+    row.appendChild(meta);
+    row.appendChild(actions);
+    assetList.appendChild(row);
   }
 }
+
 function clearAll(){
   sheetImg = null; sheetURL = null;
   slicesFiles.forEach(s => { try{ URL.revokeObjectURL(s.url);}catch(e){} });
